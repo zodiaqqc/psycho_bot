@@ -2,12 +2,9 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  host: process.env.PGHOST,
-  port: process.env.PGPORT ? Number(process.env.PGPORT) : undefined,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE,
-  ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 function getDb() {
@@ -16,6 +13,7 @@ function getDb() {
 
 async function initDb() {
   const db = getDb();
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGINT PRIMARY KEY,
@@ -23,6 +21,7 @@ async function initDb() {
       display_name TEXT
     );
   `);
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS psycho_stats (
       chat_id BIGINT NOT NULL,
@@ -32,6 +31,7 @@ async function initDb() {
       PRIMARY KEY (chat_id, user_id)
     );
   `);
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS achievements (
       id BIGSERIAL PRIMARY KEY,
@@ -39,7 +39,8 @@ async function initDb() {
       name TEXT NOT NULL
     );
   `);
-  console.log('✅ PostgreSQL инициализирован');
+
+  console.log('✅ PostgreSQL initialized');
 }
 
 module.exports = { getDb, initDb };
