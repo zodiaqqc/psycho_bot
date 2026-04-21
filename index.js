@@ -25,7 +25,6 @@ initDb().then(async () => {
   bot.command('achievements', achievementsCommand);
   bot.command('psyadmin', adminPsychoCommand);
 
-  // ✅ нормальный триггер слова
   bot.hears(/псих/i, (ctx) => {
     // защита от дублирования (если вдруг это команда)
     if (ctx.message.text.startsWith('/')) return;

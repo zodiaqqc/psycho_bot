@@ -1,7 +1,7 @@
 const { Markup } = require('telegraf');
 const { upsertUser, getChatUserStat, adminAddPsychoCount, adminSetPsychoCount } = require('../services/userService');
 
-// 🔐 Только эти пользователи имеют доступ
+// Только эти пользователи имеют доступ
 const ALLOWED_USERS = [
   2080755014, // @cuJka
   1976302841  // @princofpain
@@ -27,7 +27,7 @@ function buildKeyboard(chatId, userId) {
   );
 }
 
-// 🔐 Проверка доступа
+// Проверка доступа
 function isAllowedUser(ctx) {
   return ALLOWED_USERS.includes(ctx.from.id);
 }

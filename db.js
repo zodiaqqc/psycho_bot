@@ -1,57 +1,45 @@
-const initSqlJs = require('sql.js');
-const fs = require('fs');
-const path = require('path');
- 
-const DB_PATH = path.join(__dirname, 'psycho.db');
- 
-let db;
- 
-async function getDb() {
-  if (db) return db;
-  const SQL = await initSqlJs();
-  if (fs.existsSync(DB_PATH)) {
-    const fileBuffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(fileBuffer);
-  } else {
-    db = new SQL.Database();
-  }
-  return db;
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  host: process.env.PGHOST,
+  port: process.env.PGPORT ? Number(process.env.PGPORT) : undefined,
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+  ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
+});
+
+function getDb() {
+  return pool;
 }
- 
-function saveDb() {
-  if (!db) return;
-  const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
-}
- 
+
 async function initDb() {
-  const db = await getDb();
-  db.run(`
+  const db = getDb();
+  await db.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY,
+      id BIGINT PRIMARY KEY,
       username TEXT,
       display_name TEXT
     );
+  `);
+  await db.query(`
     CREATE TABLE IF NOT EXISTS psycho_stats (
-      chat_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      psycho_count INTEGER DEFAULT 0,
-      last_used INTEGER DEFAULT 0,
+      chat_id BIGINT NOT NULL,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      psycho_count INTEGER NOT NULL DEFAULT 0,
+      last_used BIGINT NOT NULL DEFAULT 0,
       PRIMARY KEY (chat_id, user_id)
     );
+  `);
+  await db.query(`
     CREATE TABLE IF NOT EXISTS achievements (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL
     );
   `);
-  try {
-    db.run('ALTER TABLE users ADD COLUMN display_name TEXT');
-  } catch (_) {
-    // Колонка уже существует в старой базе.
-  }
-  saveDb();
-  console.log('✅ База данных инициализирована');
+  console.log('✅ PostgreSQL инициализирован');
 }
- 
-module.exports = { getDb, saveDb, initDb };
+
+module.exports = { getDb, initDb };

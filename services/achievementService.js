@@ -1,4 +1,4 @@
-const { getDb, saveDb } = require('../db');
+const { getDb } = require('../db');
  
 const ACHIEVEMENTS = [
   '🧠 Голоса в голове',
@@ -20,12 +20,11 @@ const ACHIEVEMENTS = [
  
 async function getOwnedAchievements(userId) {
   const db = await getDb();
-  const res = db.exec(
-    'SELECT name FROM achievements WHERE user_id = ? ORDER BY id ASC',
+  const res = await db.query(
+    'SELECT name FROM achievements WHERE user_id = $1 ORDER BY id ASC',
     [userId]
   );
-  if (!res.length) return [];
-  return res[0].values.map((r) => r[0]);
+  return res.rows.map((r) => r.name);
 }
  
 async function grantRandomAchievement(userId) {
@@ -35,8 +34,7 @@ async function grantRandomAchievement(userId) {
  
   const name = available[Math.floor(Math.random() * available.length)];
   const db = await getDb();
-  db.run('INSERT INTO achievements (user_id, name) VALUES (?, ?)', [userId, name]);
-  saveDb();
+  await db.query('INSERT INTO achievements (user_id, name) VALUES ($1, $2)', [userId, name]);
   return name;
 }
  
