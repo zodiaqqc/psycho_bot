@@ -1,7 +1,7 @@
 const { getUser, upsertUser, getChatUserStat, addPsychoCount } = require('../services/userService');
 const { grantRandomAchievement } = require('../services/achievementService');
  
-const COOLDOWN_MS = 10 // * 60 * 1000; // 10 minute
+const COOLDOWN_MS = 10 * 60 * 1000; // 10 minute
 const ACHIEVEMENT_CHANCE = 0.15;
 const REQUEST_SPAM_WINDOW_MS = 3000;
 const recentAttempts = new Map();
