@@ -62,10 +62,31 @@ async function grantCustomAchievement(userId, name) {
   await db.query('INSERT INTO achievements (user_id, name) VALUES ($1, $2)', [userId, cleanName]);
   return cleanName;
 }
+
+async function getUserAchievementsWithIds(userId) {
+  const db = await getDb();
+  const res = await db.query(
+    'SELECT id, name FROM achievements WHERE user_id = $1 ORDER BY id ASC',
+    [userId]
+  );
+  return res.rows;
+}
+
+async function deleteUserAchievementByIndex(userId, index) {
+  const list = await getUserAchievementsWithIds(userId);
+  const target = list[index - 1];
+  if (!target) return null;
+
+  const db = await getDb();
+  await db.query('DELETE FROM achievements WHERE id = $1 AND user_id = $2', [target.id, userId]);
+  return target;
+}
  
 module.exports = {
   grantRandomAchievement,
   getUserAchievements,
   getRecentUserAchievements,
   grantCustomAchievement,
+  getUserAchievementsWithIds,
+  deleteUserAchievementByIndex,
 };

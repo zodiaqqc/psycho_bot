@@ -58,9 +58,9 @@ function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function buildActorLine(ctx, displayName) {
+function buildReplyLine(ctx, displayName) {
   const target = ctx.message.reply_to_message?.from;
-  if (!target || target.id === ctx.from.id) return displayName;
+  if (!target || target.id === ctx.from.id) return null;
   const targetName = getDisplayName(target);
   return pickRandom(REPLY_TEMPLATES)
     .replace('{actor}', displayName)
@@ -126,8 +126,8 @@ async function psychoCommand(ctx) {
     await addPsychoCount(chatId, userId, event.delta);
     const updated = await getChatUserStat(chatId, userId);
     const total = updated.psycho_count;
-    const actorLine = buildActorLine(ctx, displayName);
-    const eventText = event.text.replace('{actor}', actorLine);
+    const replyLine = buildReplyLine(ctx, displayName);
+    const eventText = replyLine || event.text.replace('{actor}', displayName);
     const sign = event.delta >= 0 ? '+' : '−';
     const amount = Math.abs(event.delta);
 

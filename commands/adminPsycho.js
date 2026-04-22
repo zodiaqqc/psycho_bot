@@ -1,5 +1,10 @@
 const { Markup } = require('telegraf');
 const { upsertUser, getChatUserStat, adminAddPsychoCount, adminSetPsychoCount } = require('../services/userService');
+const {
+  grantCustomAchievement,
+  getUserAchievementsWithIds,
+  deleteUserAchievementByIndex,
+} = require('../services/achievementService');
 
 // Только эти пользователи имеют доступ
 const ALLOWED_USERS = [
@@ -11,7 +16,10 @@ const ACTIONS = [
   [{ label: '➕ 1', action: 'add', value: 1 }, { label: '➕ 5', action: 'add', value: 5 }, { label: '➕ 10', action: 'add', value: 10 }],
   [{ label: '➖ 1', action: 'sub', value: 1 }, { label: '➖ 5', action: 'sub', value: 5 }, { label: '➖ 10', action: 'sub', value: 10 }],
   [{ label: '♻️ Обнулить', action: 'reset', value: 0 }],
+  [{ label: '🎖 Ачивки', action: 'achievements', value: 0 }],
 ];
+
+const pendingAdminInput = new Map();
 
 function getDisplayName(from) {
   return [from.first_name, from.last_name].filter(Boolean).join(' ') || String(from.id);
@@ -25,6 +33,20 @@ function buildKeyboard(chatId, userId) {
       )
     )
   );
+}
+
+function buildAchievementsKeyboard(chatId, userId) {
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback('➕ Добавить ачивку', `psyadmin:${chatId}:${userId}:add_achievement:0`),
+    ],
+    [
+      Markup.button.callback('➖ Удалить ачивку', `psyadmin:${chatId}:${userId}:remove_achievement:0`),
+    ],
+    [
+      Markup.button.callback('⬅️ Назад', `psyadmin:${chatId}:${userId}:back:0`),
+    ],
+  ]);
 }
 
 // Проверка доступа
@@ -66,9 +88,48 @@ async function adminPsychoCommand(ctx) {
   }
 }
 
+async function renderMainPanel(ctx, chatId, userId) {
+  const stat = await getChatUserStat(chatId, userId);
+  const user = await ctx.telegram.getChatMember(chatId, userId);
+  const displayName = getDisplayName(user.user);
+
+  await upsertUser(userId, user.user.username || null, displayName);
+
+  await ctx.editMessageText(
+    `🛠 <b>Админ-панель псих-очков</b>\n` +
+    `👤 Пользователь: <b>${displayName}</b>\n` +
+    `📊 Сейчас: <b>${stat.psycho_count}</b>`,
+    {
+      parse_mode: 'HTML',
+      ...buildKeyboard(chatId, userId),
+    }
+  );
+}
+
+async function renderAchievementsPanel(ctx, chatId, userId) {
+  const user = await ctx.telegram.getChatMember(chatId, userId);
+  const displayName = getDisplayName(user.user);
+  await upsertUser(userId, user.user.username || null, displayName);
+
+  const achievements = await getUserAchievementsWithIds(userId);
+  const lines = achievements.length
+    ? achievements.map((item, index) => `${index + 1}. ${item.name}`).join('\n')
+    : 'Пусто';
+
+  await ctx.editMessageText(
+    `🎖 <b>Ачивки пользователя</b>\n` +
+    `👤 <b>${displayName}</b>\n\n` +
+    `${lines}`,
+    {
+      parse_mode: 'HTML',
+      ...buildAchievementsKeyboard(chatId, userId),
+    }
+  );
+}
+
 async function adminPsychoAction(ctx) {
   try {
-    const [, rawChatId, rawUserId, action, rawValue] = ctx.callbackQuery.data.split(':');
+    const [, rawChatId, rawUserId, action, rawValue = '0'] = ctx.callbackQuery.data.split(':');
     const chatId = Number(rawChatId);
     const userId = Number(rawUserId);
     const value = Number(rawValue);
@@ -81,31 +142,98 @@ async function adminPsychoAction(ctx) {
       return ctx.answerCbQuery('Нет доступа.', { show_alert: true });
     }
 
-    if (action === 'add') await adminAddPsychoCount(chatId, userId, value);
-    if (action === 'sub') await adminAddPsychoCount(chatId, userId, -value);
-    if (action === 'reset') await adminSetPsychoCount(chatId, userId, 0);
+    if (action === 'add') {
+      await adminAddPsychoCount(chatId, userId, value);
+      await renderMainPanel(ctx, chatId, userId);
+      return ctx.answerCbQuery('Готово');
+    }
 
-    const stat = await getChatUserStat(chatId, userId);
-    const user = await ctx.telegram.getChatMember(chatId, userId);
-    const displayName = getDisplayName(user.user);
+    if (action === 'sub') {
+      await adminAddPsychoCount(chatId, userId, -value);
+      await renderMainPanel(ctx, chatId, userId);
+      return ctx.answerCbQuery('Готово');
+    }
 
-    await upsertUser(userId, user.user.username || null, displayName);
+    if (action === 'reset') {
+      await adminSetPsychoCount(chatId, userId, 0);
+      await renderMainPanel(ctx, chatId, userId);
+      return ctx.answerCbQuery('Готово');
+    }
 
-    await ctx.editMessageText(
-      `🛠 <b>Админ-панель псих-очков</b>\n` +
-      `👤 Пользователь: <b>${displayName}</b>\n` +
-      `📊 Сейчас: <b>${stat.psycho_count}</b>`,
-      {
-        parse_mode: 'HTML',
-        ...buildKeyboard(chatId, userId),
-      }
-    );
+    if (action === 'achievements') {
+      await renderAchievementsPanel(ctx, chatId, userId);
+      return ctx.answerCbQuery('Список ачивок');
+    }
 
-    return ctx.answerCbQuery('Готово');
+    if (action === 'back') {
+      await renderMainPanel(ctx, chatId, userId);
+      return ctx.answerCbQuery('Назад');
+    }
+
+    if (action === 'add_achievement') {
+      pendingAdminInput.set(`${chatId}:${ctx.from.id}`, {
+        mode: 'add',
+        targetUserId: userId,
+      });
+      await ctx.reply('✍️ Введи название ачивки следующим сообщением (до 80 символов).');
+      return ctx.answerCbQuery('Жду текст');
+    }
+
+    if (action === 'remove_achievement') {
+      pendingAdminInput.set(`${chatId}:${ctx.from.id}`, {
+        mode: 'remove',
+        targetUserId: userId,
+      });
+      await ctx.reply('🔢 Введи номер ачивки из списка, которую нужно удалить.');
+      return ctx.answerCbQuery('Жду номер');
+    }
+
+    return ctx.answerCbQuery('Неизвестное действие', { show_alert: true });
   } catch (err) {
     console.error('Ошибка в админ-кнопке:', err);
     return ctx.answerCbQuery('Ошибка', { show_alert: true });
   }
 }
 
-module.exports = { adminPsychoCommand, adminPsychoAction };
+async function adminPsychoTextInput(ctx) {
+  try {
+    if (!['group', 'supergroup'].includes(ctx.chat.type)) return;
+    if (!isAllowedUser(ctx)) return;
+    if (!ctx.message?.text) return;
+    if (ctx.message.text.startsWith('/')) return;
+
+    const key = `${ctx.chat.id}:${ctx.from.id}`;
+    const pending = pendingAdminInput.get(key);
+    if (!pending) return;
+
+    const rawInput = ctx.message.text.trim();
+    if (!rawInput) return ctx.reply('⚠️ Пустой ввод. Попробуй еще раз.');
+
+    if (pending.mode === 'add') {
+      const achievement = rawInput.slice(0, 80);
+      await grantCustomAchievement(pending.targetUserId, achievement);
+      pendingAdminInput.delete(key);
+      return ctx.reply(`✅ Ачивка добавлена: ${achievement}`);
+    }
+
+    if (pending.mode === 'remove') {
+      const index = Number(rawInput);
+      if (!Number.isInteger(index) || index < 1) {
+        return ctx.reply('⚠️ Введи корректный номер ачивки (1, 2, 3...).');
+      }
+
+      const removed = await deleteUserAchievementByIndex(pending.targetUserId, index);
+      if (!removed) {
+        return ctx.reply('⚠️ Ачивка с таким номером не найдена.');
+      }
+
+      pendingAdminInput.delete(key);
+      return ctx.reply(`🗑 Удалена ачивка: ${removed.name}`);
+    }
+  } catch (err) {
+    console.error('Ошибка обработки ввода админ-панели:', err);
+    return ctx.reply('❌ Не удалось обработать ввод.');
+  }
+}
+
+module.exports = { adminPsychoCommand, adminPsychoAction, adminPsychoTextInput };

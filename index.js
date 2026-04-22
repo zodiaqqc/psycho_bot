@@ -7,7 +7,7 @@ const psychoCommand = require('./commands/psycho');
 const topCommand = require('./commands/top');
 const profileCommand = require('./commands/profile');
 const giveAchievementCommand = require('./commands/giveAchievement');
-const { adminPsychoCommand, adminPsychoAction } = require('./commands/adminPsycho');
+const { adminPsychoCommand, adminPsychoAction, adminPsychoTextInput } = require('./commands/adminPsycho');
 
 if (!process.env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is required.');
@@ -48,6 +48,7 @@ async function bootstrap() {
     });
 
     bot.action(/^psyadmin:/, adminPsychoAction);
+    bot.on('text', adminPsychoTextInput);
 
     bot.catch((err) => console.error('Ошибка бота:', err));
 
