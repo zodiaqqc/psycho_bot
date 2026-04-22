@@ -6,7 +6,6 @@ const startCommand = require('./commands/start');
 const psychoCommand = require('./commands/psycho');
 const topCommand = require('./commands/top');
 const profileCommand = require('./commands/profile');
-const giveAchievementCommand = require('./commands/giveAchievement');
 const { adminPsychoCommand, adminPsychoAction, adminPsychoTextInput } = require('./commands/adminPsycho');
 
 if (!process.env.BOT_TOKEN) {
@@ -25,7 +24,6 @@ async function bootstrap() {
       { command: 'top', description: '🏆 Таблица лидеров' },
       { command: 'profile', description: '👤 Профиль и ачивки' },
       { command: 'psyadmin', description: '🛠 Админ-панель (reply)' },
-      { command: 'give_achievement', description: '🎖 Выдать ачивку (admin, reply)' },
     ]);
 
     bot.command('start', startCommand);
@@ -33,7 +31,6 @@ async function bootstrap() {
     bot.command('top', topCommand);
     bot.command('profile', profileCommand);
     bot.command('psyadmin', adminPsychoCommand);
-    bot.command('give_achievement', giveAchievementCommand);
 
     bot.hears(/^псих$/i, (ctx) => {
       // защита от дублирования (если вдруг это команда)
