@@ -40,8 +40,8 @@ This is a purely gamified system (no medical or psychological claims).
 ## 🚀 Installation
 
 ```bash
-git clone https://github.com/USERNAME/REPO.git
-cd REPO
+git clone https://github.com/zodiaqqc/psycho_bot.git
+cd psycho_bot
 npm install
 ```
 
