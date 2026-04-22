@@ -1,40 +1,40 @@
 const { getUser, upsertUser, getChatUserStat, addPsychoCount } = require('../services/userService');
 const { grantRandomAchievement } = require('../services/achievementService');
  
-const COOLDOWN_MS = 60 * 60 * 1000; // 1 час
+const COOLDOWN_MS = 10 // * 60 * 1000; // 10 minute
 const ACHIEVEMENT_CHANCE = 0.15;
 const REQUEST_SPAM_WINDOW_MS = 3000;
 const recentAttempts = new Map();
 
 const NORMAL_TEMPLATES = [
-  '{actor} устроил мини-хаос',
+  '{actor} сошёл с ума',
   '{actor} поймал импульс безумия',
-  '{actor} включил психо-режим',
+  '{actor} выпил таблетки',
   '{actor} слегка поплыл кукухой',
   '{actor} сделал странный выбор',
-  '{actor} словил нервный вайб',
+  '{actor} сделал неожиданный ход',
 ];
 
 const RARE_TEMPLATES = [
   '{actor} сорвался с цепи',
-  '{actor} открыл портал в хаос',
-  '{actor} словил эпичный психо-буст',
+  '{actor} полностью потерял контроль',
+  '{actor} увидел галлюцинации',
   '{actor} перешел на запретные таблы',
-  '{actor} устроил легендарный срыв',
+  '{actor} устроил нервный срыв',
 ];
 
 const FAIL_TEMPLATES = [
   '{actor} выпил не те таблетки',
   '{actor} перегорел и просел',
   '{actor} поймал откат по психике',
-  '{actor} словил тревожный краш',
+  '{actor} не справился с давлением',
 ];
 
 const REPLY_TEMPLATES = [
   '{actor} свел с ума {target}',
   '{actor} довел до нервного срыва {target}',
-  '{actor} шепнул безумие прямо в ухо {target}',
-  '{actor} устроил психо-атаку на {target}',
+  '{actor} оказал сильное давление на {target}',
+  '{actor} заставил {target} растеряться',
 ];
 
 function getDisplayName(from) {

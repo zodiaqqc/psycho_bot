@@ -51,3 +51,6 @@ initDb().then(async () => {
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+
+console.log("DATABASE_URL =", process.env.DATABASE_URL);
