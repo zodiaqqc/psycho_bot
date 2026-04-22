@@ -45,5 +45,27 @@ async function getUserAchievements(userId) {
     total: ACHIEVEMENTS.length,
   };
 }
+
+async function getRecentUserAchievements(userId, limit = 5) {
+  const db = await getDb();
+  const res = await db.query(
+    'SELECT name FROM achievements WHERE user_id = $1 ORDER BY id DESC LIMIT $2',
+    [userId, limit]
+  );
+  return res.rows.map((r) => r.name);
+}
+
+async function grantCustomAchievement(userId, name) {
+  const cleanName = String(name || '').trim();
+  if (!cleanName) return null;
+  const db = await getDb();
+  await db.query('INSERT INTO achievements (user_id, name) VALUES ($1, $2)', [userId, cleanName]);
+  return cleanName;
+}
  
-module.exports = { grantRandomAchievement, getUserAchievements };
+module.exports = {
+  grantRandomAchievement,
+  getUserAchievements,
+  getRecentUserAchievements,
+  grantCustomAchievement,
+};

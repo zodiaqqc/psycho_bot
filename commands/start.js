@@ -19,7 +19,7 @@ async function startCommand(ctx) {
         `📋 Команды:\n` +
         `/psycho — сойти с ума\n` +
         `/top — таблица лидеров\n` +
-        `/achievements — твои ачивки`
+        `/profile — твой профиль и ачивки`
       );
     }
  
@@ -28,7 +28,7 @@ async function startCommand(ctx) {
       `📋 Команды:\n` +
       `/psycho — сойти с ума\n` +
       `/top — таблица лидеров\n` +
-      `/achievements — твои ачивки`
+      `/profile — твой профиль и ачивки`
     );
   } catch (err) {
     console.error('Ошибка в /start:', err);

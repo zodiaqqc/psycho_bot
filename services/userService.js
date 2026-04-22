@@ -46,7 +46,7 @@ async function addPsychoCount(chatId, userId, amount) {
   const db = await getDb();
   await ensureChatStat(chatId, userId);
   await db.query(
-    'UPDATE psycho_stats SET psycho_count = psycho_count + $1, last_used = $2 WHERE chat_id = $3 AND user_id = $4',
+    'UPDATE psycho_stats SET psycho_count = GREATEST(0, psycho_count + $1), last_used = $2 WHERE chat_id = $3 AND user_id = $4',
     [amount, Date.now(), chatId, userId]
   );
 }
@@ -87,6 +87,21 @@ async function getTopUsers(chatId, limit = 10) {
   );
   return res.rows;
 }
+
+async function getUserRank(chatId, userId) {
+  const db = await getDb();
+  const res = await db.query(
+    `SELECT ranked.pos
+     FROM (
+       SELECT user_id, ROW_NUMBER() OVER (ORDER BY psycho_count DESC, user_id ASC) AS pos
+       FROM psycho_stats
+       WHERE chat_id = $1
+     ) ranked
+     WHERE ranked.user_id = $2`,
+    [chatId, userId]
+  );
+  return res.rows[0]?.pos || null;
+}
  
 module.exports = {
   getUser,
@@ -95,6 +110,7 @@ module.exports = {
   addPsychoCount,
   updateLastUsed,
   getTopUsers,
+  getUserRank,
   adminSetPsychoCount,
   adminAddPsychoCount,
 };
