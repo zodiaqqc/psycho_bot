@@ -1,64 +1,74 @@
 # 🧠 Psycho Grinder Bot
 
-A Telegram bot with a gamified progression system where users grind stats, unlock achievements, and compete on a global leaderboard.
+A Telegram bot with a gamified progression system where users can upgrade stats, unlock achievements, and compete on a global leaderboard.
 
 ---
 
-## ⚙️ About the project
+## ⚙️ About the Project
 
-Psycho Grinder Bot is a gamified system that turns user activity into progression:
+Psycho Grinder Bot is a lightweight gamification system that transforms user activity into progression:
 
-- users earn points through actions
-- points increase stats
-- stats unlock achievements
-- users compete on a leaderboard
+- actions → points  
+- points → stat growth  
+- stats → achievements  
+- everything → competitive leaderboard  
 
-This is a purely gamified system (no medical or psychological claims).
+This project is purely fictional and gamified. It does not represent or simulate real psychological or medical systems.
 
 ---
 
 ## 🎮 Features
 
-- 📈 Grinding / progression system
-- 🏆 Achievement system
-- 🥇 Global leaderboard
-- 👤 User profiles with stats
-- 🔄 Persistent progress tracking
-- ⚡ Lightweight Node.js backend
+- 📈 Progression / grinding system  
+- 🏆 Achievement system  
+- 🥇 Global leaderboard  
+- 👤 User profiles with detailed stats  
+- 🔄 Persistent data storage  
+- ⚡ Fast Node.js backend  
+- 🗄️ PostgreSQL database  
 
 ---
 
 ## 🧩 Tech Stack
 
-- Node.js
-- Telegraf (Telegram Bot API)
-- SQLite (`psycho.db`)
-- dotenv
+- Node.js  
+- Telegraf (Telegram Bot API)  
+- PostgreSQL  
+- pg (node-postgres)  
+- dotenv  
 
 ---
 
-## 🚀 Installation
+## 📦 Project Setup
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/zodiaqqc/psycho_bot.git
 cd psycho_bot
-npm install
-```
+````
 
-## 🔐 Environment variables
+### 2. Install dependencies
+- npm install
 
-- Create a .env file in the root directory:
+## 🔐 Environment Variables
+
+Create a .env file in the root directory:
+
 BOT_TOKEN=your_telegram_bot_token
+DATABASE_URL=your_postgres_connection_string
 
-- Run the bot
+## ▶️ Running the Bot
+Development / Production start
 npm start
+### 🗄️ Database
 
-## 🗄️ Database
+The bot uses PostgreSQL as its main database.
 
-- The bot uses SQLite for local storage:
+It stores:
 
-- user stats
-- achievements
-- leaderboard data
-
-- File: psycho.db
+user profiles
+statistics
+achievements
+leaderboard data
+progression history
