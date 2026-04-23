@@ -24,15 +24,16 @@ async function profileCommand(ctx) {
     const { owned } = await getUserAchievements(userId);
     const recent = await getRecentUserAchievements(userId, 5);
 
-    const achievementsLine = owned.length
-      ? `${owned.length} (${recent.join(', ')})`
-      : '0';
+    const achievementsList = owned.length
+      ? recent.map((item) => `• ${item}`).join('\n')
+      : '• нет ачивок';
 
     return ctx.reply(
       `👤 ${displayName}\n` +
       `🧠 Психи: ${stat.psycho_count}\n` +
       `🏆 Топ: ${rank ? `#${rank}` : '—'}\n` +
-      `🎖 Ачивки: ${achievementsLine}`
+      `🎖 Ачивки: ${owned.length}\n` +
+      `${achievementsList}`
     );
   } catch (err) {
     console.error('Ошибка в /profile:', err);

@@ -49,9 +49,22 @@ function buildAchievementsKeyboard(chatId, userId) {
   ]);
 }
 
-// Проверка доступа
-function isAllowedUser(ctx) {
-  return ALLOWED_USERS.includes(ctx.from.id);
+// Проверка доступа: разработчики + текущий владелец группы
+async function isAllowedUser(ctx, chatId = ctx.chat?.id) {
+  if (ALLOWED_USERS.includes(ctx.from.id)) {
+    return true;
+  }
+
+  if (!chatId) {
+    return false;
+  }
+
+  try {
+    const member = await ctx.telegram.getChatMember(chatId, ctx.from.id);
+    return member?.status === 'creator';
+  } catch (err) {
+    return false;
+  }
 }
 
 async function adminPsychoCommand(ctx) {
@@ -60,7 +73,7 @@ async function adminPsychoCommand(ctx) {
       return ctx.reply('⚠️ Эта панель работает только в группах.');
     }
 
-    if (!isAllowedUser(ctx)) {
+    if (!(await isAllowedUser(ctx))) {
       return ctx.reply('⛔ У тебя нет доступа к этой панели.');
     }
 
@@ -138,7 +151,7 @@ async function adminPsychoAction(ctx) {
       return ctx.answerCbQuery('Панель не из этого чата.', { show_alert: true });
     }
 
-    if (!isAllowedUser(ctx)) {
+    if (!(await isAllowedUser(ctx, chatId))) {
       return ctx.answerCbQuery('Нет доступа.', { show_alert: true });
     }
 
@@ -198,7 +211,7 @@ async function adminPsychoAction(ctx) {
 async function adminPsychoTextInput(ctx) {
   try {
     if (!['group', 'supergroup'].includes(ctx.chat.type)) return;
-    if (!isAllowedUser(ctx)) return;
+    if (!(await isAllowedUser(ctx))) return;
     if (!ctx.message?.text) return;
     if (ctx.message.text.startsWith('/')) return;
 
